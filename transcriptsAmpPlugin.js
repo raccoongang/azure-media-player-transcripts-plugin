@@ -3,78 +3,8 @@
 
 /* global _ amp gettext */
 
-(function () {
-
-    amp.plugin('transcriptsAmpPlugin', function(_options) {
-        'use strict';
-        var player = this;
-        var timeHandler = null;
-        var $vidParent = $(player.el());
-        var transcriptCues = null;
-        var $transcriptElement;
-
-        this.addEventListener("loadeddata", function() {
-            'use strict';
-            var $transcriptButton;
-            var $transcriptButtonMenu;
-            var $vidAndTranscript = $vidParent.closest('.video');
-
-            $vidParent.css('width', '');  // Clear fixed width to support responsive UX.
-
-            $transcriptElement = $vidAndTranscript.find('.subtitles').first();
-            if ($transcriptElement.length) {
-                // Find and re-position button markup. This must be done
-                // after AMP initializes built-in player controls.
-                $transcriptButton = $transcriptElement.find('.toggleTranscript').first();
-                $vidParent.find('.amp-controlbaricons-right').first().append($transcriptButton);
-
-                $transcriptButtonMenu = $transcriptButton.find('.vjs-menu').first();
-                $transcriptButton.on('mouseenter mouseleave', (function() {
-                    $transcriptButtonMenu.toggle();
-                }));
-
-                $transcriptButtonMenu.on('click', '.vjs-menu-item', function(evt) {
-                    var $target = $(evt.target);
-                    $transcriptButtonMenu.find('.vjs-menu-item')
-                        .removeClass('vjs-selected')
-                        .attr('aria-selected', false);
-                    $target
-                        .addClass('vjs-selected')
-                        .attr('aria-selected', true);
-
-                    if ($.trim($target.html()) === 'Off') {
-                        $vidAndTranscript.addClass('closed');
-                    } else {
-                        transcriptCues = initTranscript(
-                            player, $transcriptElement
-                        );
-                        $vidAndTranscript.removeClass('closed');
-                    }
-                });
-            }
-        });
-        this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
-            'use strict';
-            timeHandler = setInterval(function() {
-                    syncTimer(player, transcriptCues, $transcriptElement);
-                },
-                100
-            );
-        });
-        this.addEventListener(amp.eventName.pause, function(evt) {  // eslint-disable-line no-unused-vars
-            'use strict';
-            if (timeHandler !== null) {
-                clearInterval(timeHandler);
-            }
-        });
-        this.addEventListener(amp.eventName.ended, function(evt) {  // eslint-disable-line no-unused-vars
-            'use strict';
-            if (timeHandler !== null) {
-                clearInterval(timeHandler);
-            }
-        });
-
-    });
+(function() {
+    'use strict';
 
     /**
      * This is called regularly while the video plays
@@ -86,7 +16,6 @@
      * @private
      */
     function syncTimer(player, transcriptCues, $transcriptElement) {
-        'use strict';
         // Gather each transcript phrase (each pseudo-hyperlink in transcript).
         var cue;
         var isActive;
@@ -135,7 +64,6 @@
      * @returns {Array}
      */
     function initTranscript(player, $transcriptElement) {
-        'use strict';
         var cue;
         var html;
         var startTime;
@@ -161,7 +89,6 @@
 
         // Handle events when user clicks on transcripts
         $transcriptItems.on('click keypress', function(evt) {
-            'use strict';
             var KeyCode = (evt.type === 'keydown' && evt.keyCode ? evt.keyCode : evt.which);
             if (evt.type !== 'click' && (KeyCode !== 32 && KeyCode !== 13)) {
                 return;
@@ -184,4 +111,68 @@
         return cues;
     }
 
+    amp.plugin('transcriptsAmpPlugin', function() {
+        var player = this;
+        var timeHandler = null;
+        var $vidParent = $(player.el());
+        var transcriptCues = null;
+        var $transcriptElement;
+
+        this.addEventListener('loadeddata', function() {
+            var $transcriptButton;
+            var $transcriptButtonMenu;
+            var $vidAndTranscript = $vidParent.closest('.video');
+
+            $vidParent.css('width', '');  // Clear fixed width to support responsive UX.
+
+            $transcriptElement = $vidAndTranscript.find('.subtitles').first();
+            if ($transcriptElement.length) {
+                // Find and re-position button markup. This must be done
+                // after AMP initializes built-in player controls.
+                $transcriptButton = $transcriptElement.find('.toggleTranscript').first();
+                $vidParent.find('.amp-controlbaricons-right').first().append($transcriptButton);
+
+                $transcriptButtonMenu = $transcriptButton.find('.vjs-menu').first();
+                $transcriptButton.on('mouseenter mouseleave', (function() {
+                    $transcriptButtonMenu.toggle();
+                }));
+
+                $transcriptButtonMenu.on('click', '.vjs-menu-item', function(evt) {
+                    var $target = $(evt.target);
+                    $transcriptButtonMenu.find('.vjs-menu-item')
+                        .removeClass('vjs-selected')
+                        .attr('aria-selected', false);
+                    $target
+                        .addClass('vjs-selected')
+                        .attr('aria-selected', true);
+
+                    if ($.trim($target.html()) === 'Off') {
+                        $vidAndTranscript.addClass('closed');
+                    } else {
+                        transcriptCues = initTranscript(
+                            player, $transcriptElement
+                        );
+                        $vidAndTranscript.removeClass('closed');
+                    }
+                });
+            }
+        });
+        this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
+            timeHandler = setInterval(function() {
+                syncTimer(player, transcriptCues, $transcriptElement);
+            },
+            100
+            );
+        });
+        this.addEventListener(amp.eventName.pause, function(evt) {  // eslint-disable-line no-unused-vars
+            if (timeHandler !== null) {
+                clearInterval(timeHandler);
+            }
+        });
+        this.addEventListener(amp.eventName.ended, function(evt) {  // eslint-disable-line no-unused-vars
+            if (timeHandler !== null) {
+                clearInterval(timeHandler);
+            }
+        });
+    });
 }).call(this);

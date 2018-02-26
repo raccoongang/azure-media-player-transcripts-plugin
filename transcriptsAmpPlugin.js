@@ -5,22 +5,21 @@
 
 (function () {
 
-    amp.plugin('transcriptsAmpPlugin', function(options) {
+    amp.plugin('transcriptsAmpPlugin', function(_options) {
         'use strict';
         var player = this;
         var timeHandler = null;
-        var $vidParent = $(player.el_);  // eslint-disable-line no-underscore-dangle
+        var $vidParent = $(player.el());
         var transcriptCues = null;
         var $transcriptElement;
-        var container = options.container;
 
         this.addEventListener("loadeddata", function() {
             'use strict';
-            $vidParent.css('width', '');  // Clear fixed width to support responsive UX.
-
             var $transcriptButton;
             var $transcriptButtonMenu;
-            var $vidAndTranscript = $(container).find('.video').first();
+            var $vidAndTranscript = $vidParent.closest('.video');
+
+            $vidParent.css('width', '');  // Clear fixed width to support responsive UX.
 
             $transcriptElement = $vidAndTranscript.find('.subtitles').first();
             if ($transcriptElement.length) {

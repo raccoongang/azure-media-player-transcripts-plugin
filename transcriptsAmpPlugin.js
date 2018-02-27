@@ -6,23 +6,24 @@
 (function() {
     'use strict';
 
+    var transcriptCues = null;
+
     var MenuItem = amp.getComponent('MenuItem');
     var TranscriptsMenuItem = amp.extend(MenuItem, {
         constructor: function() {
             var player = arguments[0];
             var options = arguments[1];
-            var track = options.track;
-            var tracks = player.textTracks();
-            options.label = options.label || track.label || 'Unknown';
+            this.track = options.track;
+            options.label = options.label || this.track.label || 'Unknown';
             MenuItem.apply(this, arguments);
-            // this.on('click', this.handleClick);
         },
         handleClick: function(evt) {
             var $transcriptButtonMenu = $(this.el()).closest('.vjs-transcripts-button');
             var $target = $(evt.target);
             var player = this.player();
             var $wrapper = $('div.tc-wrapper');
-            // console.log('player', player)
+            var $transcriptElement = $('div.tc-container');
+
             $transcriptButtonMenu
                 .find('.vjs-menu-item')
                 .removeClass('vjs-selected')
@@ -34,7 +35,7 @@
             if ($.trim($target.text()) === 'Off, selected') {
                 $wrapper.addClass('closed');
             } else {
-                player.transcriptCues = initTranscript(player, player.$transcriptElement);
+                transcriptCues = initTranscript(player, $transcriptElement, this.track);
                 $wrapper.removeClass('closed');
             }
         }
@@ -131,12 +132,12 @@
      * @param $transcriptElement
      * @returns {Array}
      */
-    function initTranscript(player, $transcriptElement) {
+    function initTranscript(player, $transcriptElement, track) {
         var cue;
         var html;
         var startTime;
         var $transcriptItems;
-        var cues = player.textTracks()[0].cues;  //TODO: unhardcode this
+        var cues = track.cues;
 
         // Creates transcript markup.
         // TODO: use Backbone's client-side templating view (underscore)
@@ -183,24 +184,21 @@
         var player = this;
         var timeHandler = null;
         var $vidParent = $(player.el()).parent().parent();
-        this.$transcriptElement = $('<div/>').addClass('subtitles js-transcripts-container');
-        this.transcriptCues = null;
+        var $transcriptElement = null;
 
         this.addEventListener('loadeddata', function() {
-            // create tc-wrapper and wrap player in it;
             var $vidAndTranscript = $('<div class="tc-wrapper video closed"></div>');
+            $transcriptElement = $('<div class="tc-container"></div>');
             $vidParent.wrap($vidAndTranscript);
-            this.$wrapper = $vidAndTranscript;
-            this.$wrapper.append(this.$transcriptElement);
+            $transcriptElement.appendTo($('.tc-wrapper'));
 
             player
                 .getChild('controlBar')
                 .getChild('controlBarIconsRight')
-                .addChild(new TranscriptsMenuButton(player, {title: 'TRANSCRIPTS'}));
+                .addChild('TranscriptsMenuButton', {title: 'TRANSCRIPTS'});
+
         });
         this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
-            var transcriptCues = this.transcriptCues;
-            var $transcriptElement = this.$transcriptElement;
             timeHandler = setInterval(function() {
                 syncTimer(player, transcriptCues, $transcriptElement);
             },

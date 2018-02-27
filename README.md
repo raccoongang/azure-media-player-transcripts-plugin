@@ -1,2 +1,4 @@
 # azure-media-player-transcripts-plugin
-Plugin to show transcripts on Azure Media Player
+
+Azure Media Player plugin which assignment is to transform available
+text tracks (captions/subtitles) into interactive transcripts.

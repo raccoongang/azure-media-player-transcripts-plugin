@@ -48,6 +48,9 @@
             this.addClass('vjs-transcripts-button');
             this.addClass('fa');
             this.addClass('fa-quote-left');
+            if (arguments && arguments[1].identity === 'off') {
+                this.el().classList.add('off');
+            }
         },
         createItems: function() {
             var player = this.player();
@@ -59,7 +62,8 @@
             items.push(new TranscriptsMenuItem(player, {
                 selectable: true,
                 selected: true,
-                label: 'Off'
+                label: 'Off',
+                identity: 'off'
             }));
             items = items.concat(tracks.tracks_.map(function(track) {
                 return new TranscriptsMenuItem(player, {
@@ -184,7 +188,9 @@
         var $transcriptElement = null;
 
         this.addEventListener('loadeddata', function() {
-            var $vidAndTranscript = $('<div class="tc-wrapper video closed"></div>');
+            var $vidAndTranscript = $(
+                '<div class="tc-wrapper video closed"><div class="azuremediaplayer"></div></div>'
+            );
             $transcriptElement = $('<div class="tc-container"></div>');
             $vidParent.wrap($vidAndTranscript);
             $transcriptElement.appendTo($('.tc-wrapper'));

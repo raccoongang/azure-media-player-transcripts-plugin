@@ -68,9 +68,6 @@
                 });
             }));
             return items;
-        },
-        handleClick: function(evt) {
-            console.log('clickd!')
         }
     });
     amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
@@ -183,7 +180,7 @@
     amp.plugin('transcriptsAmpPlugin', function() {
         var player = this;
         var timeHandler = null;
-        var $vidParent = $(player.el()).parent().parent();
+        var $vidParent = $(player.el()).parent();
         var $transcriptElement = null;
 
         this.addEventListener('loadeddata', function() {

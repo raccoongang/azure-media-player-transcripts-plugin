@@ -16,6 +16,9 @@
             this.track = options.track;
             options.label = options.label || this.track.label || 'Unknown';
             MenuItem.apply(this, arguments);
+            if (arguments && arguments[1].identity === 'off') {
+                this.el().classList.add('off');
+            }
         },
         handleClick: function(evt) {
             var $transcriptButtonMenu = $(this.el()).closest('.vjs-transcripts-button');
@@ -32,7 +35,7 @@
                 .addClass('vjs-selected')
                 .attr('aria-selected', true);
 
-            if ($.trim($target.text()) === 'Off, selected') {
+            if ($target.hasClass('off')) {
                 $wrapper.addClass('closed');
             } else {
                 transcriptCues = initTranscript(player, $transcriptElement, this.track);
@@ -48,9 +51,6 @@
             this.addClass('vjs-transcripts-button');
             this.addClass('fa');
             this.addClass('fa-quote-left');
-            if (arguments && arguments[1].identity === 'off') {
-                this.el().classList.add('off');
-            }
         },
         createItems: function() {
             var player = this.player();

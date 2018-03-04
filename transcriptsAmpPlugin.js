@@ -16,9 +16,6 @@
             this.track = options.track;
             options.label = options.label || this.track.label || 'Unknown';
             MenuItem.apply(this, arguments);
-            if (arguments && arguments[1].identity === 'off') {
-                this.el().classList.add('off');
-            }
         },
         handleClick: function(evt) {
             var $transcriptButtonMenu = $(this.el()).closest('.vjs-transcripts-button');
@@ -35,7 +32,7 @@
                 .addClass('vjs-selected')
                 .attr('aria-selected', true);
 
-            if ($target.hasClass('off')) {
+            if (this.options_.identity === 'off') {
                 $wrapper.addClass('closed');
             } else {
                 transcriptCues = initTranscript(player, $transcriptElement, this.track);
@@ -63,12 +60,14 @@
                 selectable: true,
                 selected: true,
                 label: 'Off',
-                identity: 'off'
+                identity: 'off',
+                parent: this
             }));
             items = items.concat(tracks.tracks_.map(function(track) {
                 return new TranscriptsMenuItem(player, {
                     selectable: true,
-                    track: track
+                    track: track,
+                    parent: this
                 });
             }));
             return items;
@@ -186,6 +185,7 @@
         var timeHandler = null;
         var $vidParent = $(player.el()).parent();
         var $transcriptElement = null;
+        var tcButton = new TranscriptsMenuButton(player, {title: 'TRANSCRIPTS'});
 
         this.addEventListener('loadeddata', function() {
             var $vidAndTranscript = $(
@@ -198,7 +198,7 @@
             player
                 .getChild('controlBar')
                 .getChild('controlBarIconsRight')
-                .addChild('TranscriptsMenuButton', {title: 'TRANSCRIPTS'});
+                .addChild(tcButton);
 
         });
         this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars

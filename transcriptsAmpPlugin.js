@@ -18,19 +18,14 @@
             MenuItem.apply(this, arguments);
         },
         handleClick: function(evt) {
-            var $transcriptButtonMenu = $(this.el()).closest('.vjs-transcripts-button');
-            var $target = $(evt.target);
             var player = this.player();
             var $wrapper = $('div.tc-wrapper');
             var $transcriptElement = $('div.tc-container');
 
-            $transcriptButtonMenu
-                .find('.vjs-menu-item')
-                .removeClass('vjs-selected')
-                .attr('aria-selected', false);
-            $target
-                .addClass('vjs-selected')
-                .attr('aria-selected', true);
+            this.options_.parent.items.forEach(function(item) {
+                item.selected(false);
+            });
+            this.selected(true);
 
             if (this.options_.identity === 'off') {
                 $wrapper.addClass('closed');
@@ -52,22 +47,24 @@
         createItems: function() {
             var player = this.player();
             var items = [];
+            var menuButton = this;
             var tracks = player.textTracks();
             if (!tracks) {
                 return items;
             }
             items.push(new TranscriptsMenuItem(player, {
-                selectable: true,
-                selected: true,
-                label: 'Off',
                 identity: 'off',
-                parent: this
+                label: 'Off',
+                parent: menuButton,
+                selectable: true,
+                selected: true
             }));
             items = items.concat(tracks.tracks_.map(function(track) {
                 return new TranscriptsMenuItem(player, {
+                    identity: 'item',
+                    parent: menuButton,
                     selectable: true,
-                    track: track,
-                    parent: this
+                    track: track
                 });
             }));
             return items;

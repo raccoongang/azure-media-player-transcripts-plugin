@@ -8,7 +8,10 @@
 
     var transcriptCues = null;
 
+    var Component = amp.getComponent('Component');
     var MenuItem = amp.getComponent('MenuItem');
+    var MenuButton = amp.getComponent('MenuButton');
+
     var TranscriptsMenuItem = amp.extend(MenuItem, {
         constructor: function() {
             var player = arguments[0];
@@ -36,7 +39,6 @@
         }
     });
 
-    var MenuButton = amp.getComponent('MenuButton');
     var TranscriptsMenuButton = amp.extend(MenuButton, {
         constructor: function() {
             MenuButton.apply(this, arguments);
@@ -71,6 +73,22 @@
         }
     });
     amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
+
+    var TranscriptContainer = amp.extend(Component, {
+        constructor: function() {
+            Component.apply(this, arguments);
+            this.addClass('tc-container')
+        }
+    });
+
+    var MainContainer = amp.extend(Component, {
+        constructor: function() {
+            Component.apply(this, arguments);
+            this.addClass('tc-wrapper');
+            this.addClass('video');
+            this.addClass('closed');
+        }
+    });
 
 
     /**
@@ -125,8 +143,8 @@
     /**
      * Transcripts creating.
      * @param player
-     * @param transcript
      * @param $transcriptElement
+     * @param track
      * @returns {Array}
      */
     function initTranscript(player, $transcriptElement, track) {
@@ -180,27 +198,24 @@
     amp.plugin('transcriptsAmpPlugin', function() {
         var player = this;
         var timeHandler = null;
-        var $vidParent = $(player.el()).parent();
-        var $transcriptElement = null;
+        var $vidParent = $(player.el()).parent().parent();
         var tcButton = new TranscriptsMenuButton(player, {title: 'TRANSCRIPTS'});
+        var mainContainer = new MainContainer(player, {});
+        var transcriptContainer = new TranscriptContainer(player, {});
+        var $transcriptContainerEl = $(transcriptContainer.el());
 
         this.addEventListener('loadeddata', function() {
-            var $vidAndTranscript = $(
-                '<div class="tc-wrapper video closed"><div class="azuremediaplayer"></div></div>'
-            );
-            $transcriptElement = $('<div class="tc-container"></div>');
-            $vidParent.wrap($vidAndTranscript);
-            $transcriptElement.appendTo($('.tc-wrapper'));
+            $vidParent.wrap(mainContainer.el());
+            $vidParent.parent().append(transcriptContainer.el());
 
             player
                 .getChild('controlBar')
                 .getChild('controlBarIconsRight')
                 .addChild(tcButton);
-
         });
         this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
             timeHandler = setInterval(function() {
-                syncTimer(player, transcriptCues, $transcriptElement);
+                syncTimer(player, transcriptCues, $transcriptContainerEl);
             },
             100
             );

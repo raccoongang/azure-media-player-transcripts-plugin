@@ -51,7 +51,7 @@
     width: 100%;
     transition: 0.3s;
 }
-.video.tc-wrapper .tc-container .subtitles-menu .azure-media-xblock-transcript-element.current {
+.video.tc-wrapper .tc-container .subtitles-menu .transcript-cue.current {
     font-weight: 600;
     color: #000;
 }
@@ -69,4 +69,8 @@
     padding: 5px;
     pointer-events: none;
     text-transform: uppercase;
+}
+
+ul.subtitles-menu {
+    list-style: none;
 }

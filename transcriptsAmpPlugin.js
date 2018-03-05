@@ -17,13 +17,15 @@
             var player = arguments[0];
             var options = arguments[1];
             this.track = options.track;
+            this.cues = [];
             options.label = options.label || this.track.label || 'Unknown';
             MenuItem.apply(this, arguments);
         },
         handleClick: function(evt) {
             var player = this.player();
+            var track = this.track;
             var $wrapper = $('div.tc-wrapper');
-            var $transcriptElement = $('div.tc-container');
+            var $transcriptContainer = $('div.tc-container');
 
             this.options_.parent.items.forEach(function(item) {
                 item.selected(false);
@@ -33,7 +35,7 @@
             if (this.options_.identity === 'off') {
                 $wrapper.addClass('closed');
             } else {
-                transcriptCues = initTranscript(player, $transcriptElement, this.track);
+                transcriptCues = initTranscript(player, $transcriptContainer, this.track);
                 $wrapper.removeClass('closed');
             }
         }
@@ -74,13 +76,6 @@
     });
     amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
 
-    var TranscriptContainer = amp.extend(Component, {
-        constructor: function() {
-            Component.apply(this, arguments);
-            this.addClass('tc-container')
-        }
-    });
-
     var MainContainer = amp.extend(Component, {
         constructor: function() {
             Component.apply(this, arguments);
@@ -90,6 +85,39 @@
         }
     });
 
+    var TranscriptContainer = amp.extend(Component, {
+        constructor: function() {
+            Component.apply(this, arguments);
+        },
+        createEl: function() {
+            return $('<div class="tc-container"><ul class="subtitles-menu"></ul></div>').get(0);
+        }
+    });
+
+    var CueItem = amp.extend(MenuItem, {
+        constructor: function() {
+            var player = arguments[0];
+            var options = arguments[1];
+            this.text = options.text;
+            this.startTime = options.startTime;
+            this.endTime = options.endTime;
+            MenuItem.apply(this, arguments);
+        },
+        createEl: function() {
+            return Component.prototype.createEl(
+                'li',
+                {
+                    tabIndex: -1,
+                    role: "link",
+                    className: 'transcript-cue',
+                    innerHTML: $('<span>').text(this.options_.text).html()
+                },
+                {
+                    'data-cue-start': this.options_.startTime
+                }
+            );
+        }
+    });
 
     /**
      * This is called regularly while the video plays
@@ -106,7 +134,7 @@
         var isActive;
         var $targetElement;
         var scrollUpSize;
-        var $transcriptItems = $transcriptElement.find('.azure-media-xblock-transcript-element');
+        var $transcriptItems = $transcriptElement.find('.transcript-cue');
         var currentTime = player.currentTime();
 
         if (transcriptCues === null || !$transcriptElement.length) {
@@ -149,27 +177,26 @@
      */
     function initTranscript(player, $transcriptElement, track) {
         var cue;
-        var html;
+        var cueComponent;
+        var $html_;
         var startTime;
         var $transcriptItems;
         var cues = track.cues;
 
-        // Creates transcript markup.
-        // TODO: use Backbone's client-side templating view (underscore)
-        html = '<ol class="subtitles-menu" style="list-style:none;">';
+        $html_ = $('<ul class="subtitles-menu"></ul>');
         for (var i = 0; i < cues.length; i++) { // eslint-disable-line vars-on-top
             cue = cues[i];
-
-            html += '<li role="link" tabindex="0"'
-                + 'data-transcript-element-start-time="' + _.escape(cue.startTime)
-                + '" class="azure-media-xblock-transcript-element" >'
-                + _.escape(cue.text) + '</li>';
+            cueComponent = new CueItem(player, {
+                text: cue.text,
+                startTime: cue.startTime,
+                endTime: cue.endTime
+            });
+            $html_.append(cueComponent.el());
         }
-        html += '</ol>';
-        $transcriptElement.html(html);
+        $transcriptElement.html($html_);
 
         // Gather each transcript phrase (each pseudo-hyperlink in transcript).
-        $transcriptItems = $transcriptElement.find('.azure-media-xblock-transcript-element');
+        $transcriptItems = $transcriptElement.find('.transcript-cue');
 
         // Handle events when user clicks on transcripts
         $transcriptItems.on('click keypress', function(evt) {
@@ -188,7 +215,7 @@
             $(evt.target).addClass('current');
 
             // Set the player to match the transcript time
-            startTime = parseFloat($(evt.target).data('transcript-element-start-time'));
+            startTime = parseFloat($(evt.target).data('cue-start'));
             player.currentTime(startTime);
         });
 

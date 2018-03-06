@@ -14,28 +14,29 @@
 
     var TranscriptsMenuItem = amp.extend(MenuItem, {
         constructor: function() {
-            var player = arguments[0];
+            var player = arguments[0];  // eslint-disable-line no-unused-vars
             var options = arguments[1];
             this.track = options.track;
             this.cues = [];
             options.label = options.label || this.track.label || 'Unknown';
             MenuItem.apply(this, arguments);
         },
-        handleClick: function(evt) {
+        handleClick: function(evt) {  // eslint-disable-line no-unused-vars
             var player = this.player();
-            var track = this.track;
             var $wrapper = $('div.tc-wrapper');
             var $transcriptContainer = $('div.tc-container');
 
-            this.options_.parent.items.forEach(function(item) {
+            this.options_.parent.items.forEach(function(item) {  // eslint-disable-line no-underscore-dangle
                 item.selected(false);
             });
             this.selected(true);
 
-            if (this.options_.identity === 'off') {
+            if (this.options_.identity === 'off') {  // eslint-disable-line no-underscore-dangle
                 $wrapper.addClass('closed');
             } else {
-                transcriptCues = initTranscript(player, $transcriptContainer, this.track);
+                transcriptCues = initTranscript(  // eslint-disable-line no-use-before-define
+                    player, $transcriptContainer, this.track
+                );
                 $wrapper.removeClass('closed');
             }
         }
@@ -63,7 +64,7 @@
                 selectable: true,
                 selected: true
             }));
-            items = items.concat(tracks.tracks_.map(function(track) {
+            items = items.concat(tracks.tracks_.map(function(track) {  // eslint-disable-line no-underscore-dangle
                 return new TranscriptsMenuItem(player, {
                     identity: 'item',
                     parent: menuButton,
@@ -74,7 +75,6 @@
             return items;
         }
     });
-    amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
 
     var MainContainer = amp.extend(Component, {
         constructor: function() {
@@ -96,7 +96,7 @@
 
     var CueItem = amp.extend(MenuItem, {
         constructor: function() {
-            var player = arguments[0];
+            var player = arguments[0];  // eslint-disable-line no-unused-vars
             var options = arguments[1];
             this.text = options.text;
             this.startTime = options.startTime;
@@ -108,27 +108,65 @@
                 'li',
                 {
                     tabIndex: -1,
-                    role: "link",
+                    role: 'link',
                     className: 'transcript-cue',
-                    innerHTML: $('<span>').text(this.options_.text).html()
+                    innerHTML: $('<span>').text(this.options_.text).html()  // eslint-disable-line no-underscore-dangle
                 },
                 {
-                    'data-cue-start': this.options_.startTime
+                    'data-cue-start': this.options_.startTime  // eslint-disable-line no-underscore-dangle
                 }
             );
         }
     });
 
-    /**
+    amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
+    amp.plugin('transcriptsAmpPlugin', function() {
+        var player = this;
+        var timeHandler = null;
+        var $vidParent = $(player.el()).parent().parent();
+        var tcButton = new TranscriptsMenuButton(player, {title: 'TRANSCRIPTS'});
+        var mainContainer = new MainContainer(player, {});
+        var transcriptContainer = new TranscriptContainer(player, {});
+        var $transcriptContainerEl = $(transcriptContainer.el());
+
+        this.addEventListener('loadeddata', function() {
+            $vidParent.wrap(mainContainer.el());
+            $vidParent.parent().append(transcriptContainer.el());
+
+            player
+                .getChild('controlBar')
+                .getChild('controlBarIconsRight')
+                .addChild(tcButton);
+        });
+        this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
+            timeHandler = setInterval(function() {
+                syncTimer(player, transcriptCues, $transcriptContainerEl);  // eslint-disable-line no-use-before-define
+            },
+            100
+            );
+        });
+        this.addEventListener(amp.eventName.pause, function(evt) {  // eslint-disable-line no-unused-vars
+            if (timeHandler !== null) {
+                clearInterval(timeHandler);
+            }
+        });
+        this.addEventListener(amp.eventName.ended, function(evt) {  // eslint-disable-line no-unused-vars
+            if (timeHandler !== null) {
+                clearInterval(timeHandler);
+            }
+        });
+    });
+
+     /**
      * This is called regularly while the video plays
      * so that we can correctly highlight the transcript elements
      * based on the current position of the video playback
      * @param player
-     * @param transcriptCues
+     * @param trackCues
      * @param $transcriptElement
      * @private
      */
-    function syncTimer(player, transcriptCues, $transcriptElement) {
+    function syncTimer(player, trackCues, $transcriptElement) {
         // Gather each transcript phrase (each pseudo-hyperlink in transcript).
         var cue;
         var isActive;
@@ -137,13 +175,13 @@
         var $transcriptItems = $transcriptElement.find('.transcript-cue');
         var currentTime = player.currentTime();
 
-        if (transcriptCues === null || !$transcriptElement.length) {
+        if (trackCues === null || !$transcriptElement.length) {
             return;
         }
 
         // Simple linear search.
-        for (var i = 0; i < transcriptCues.length; i++) {  // eslint-disable-line vars-on-top
-            cue = transcriptCues[i];
+        for (var i = 0; i < trackCues.length; i++) {  // eslint-disable-line vars-on-top
+            cue = trackCues[i];
 
             if (currentTime >= cue.startTime && currentTime < cue.endTime) {
                 $targetElement = $transcriptItems.eq(i);
@@ -167,7 +205,6 @@
         }
     }
 
-
     /**
      * Transcripts creating.
      * @param player
@@ -178,12 +215,11 @@
     function initTranscript(player, $transcriptElement, track) {
         var cue;
         var cueComponent;
-        var $html_;
         var startTime;
         var $transcriptItems;
         var cues = track.cues;
+        var $html = $('<ul class="subtitles-menu"></ul>');
 
-        $html_ = $('<ul class="subtitles-menu"></ul>');
         for (var i = 0; i < cues.length; i++) { // eslint-disable-line vars-on-top
             cue = cues[i];
             cueComponent = new CueItem(player, {
@@ -191,9 +227,9 @@
                 startTime: cue.startTime,
                 endTime: cue.endTime
             });
-            $html_.append(cueComponent.el());
+            $html.append(cueComponent.el());
         }
-        $transcriptElement.html($html_);
+        $transcriptElement.html($html);
 
         // Gather each transcript phrase (each pseudo-hyperlink in transcript).
         $transcriptItems = $transcriptElement.find('.transcript-cue');
@@ -221,41 +257,4 @@
 
         return cues;
     }
-
-    amp.plugin('transcriptsAmpPlugin', function() {
-        var player = this;
-        var timeHandler = null;
-        var $vidParent = $(player.el()).parent().parent();
-        var tcButton = new TranscriptsMenuButton(player, {title: 'TRANSCRIPTS'});
-        var mainContainer = new MainContainer(player, {});
-        var transcriptContainer = new TranscriptContainer(player, {});
-        var $transcriptContainerEl = $(transcriptContainer.el());
-
-        this.addEventListener('loadeddata', function() {
-            $vidParent.wrap(mainContainer.el());
-            $vidParent.parent().append(transcriptContainer.el());
-
-            player
-                .getChild('controlBar')
-                .getChild('controlBarIconsRight')
-                .addChild(tcButton);
-        });
-        this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
-            timeHandler = setInterval(function() {
-                syncTimer(player, transcriptCues, $transcriptContainerEl);
-            },
-            100
-            );
-        });
-        this.addEventListener(amp.eventName.pause, function(evt) {  // eslint-disable-line no-unused-vars
-            if (timeHandler !== null) {
-                clearInterval(timeHandler);
-            }
-        });
-        this.addEventListener(amp.eventName.ended, function(evt) {  // eslint-disable-line no-unused-vars
-            if (timeHandler !== null) {
-                clearInterval(timeHandler);
-            }
-        });
-    });
 }).call(this);

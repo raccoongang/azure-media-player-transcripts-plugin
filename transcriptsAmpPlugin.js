@@ -33,12 +33,19 @@
 
             if (this.options_.identity === 'off') {  // eslint-disable-line no-underscore-dangle
                 $wrapper.addClass('closed');
+                this.emitEvent('hide_transcript');
             } else {
                 transcriptCues = initTranscript(  // eslint-disable-line no-use-before-define
                     player, $transcriptContainer, this.track
                 );
                 $wrapper.removeClass('closed');
+                this.emitEvent('show_transcript');
             }
+        },
+        emitEvent: function(evtType) {
+            var player = this.player();
+            var transcriptsEvent = new CustomEvent(evtType);
+            player.el().dispatchEvent(transcriptsEvent);
         }
     });
 
@@ -120,7 +127,7 @@
     });
 
     amp.registerComponent('TranscriptsMenuButton', TranscriptsMenuButton);
-    amp.plugin('transcriptsAmpPlugin', function() {
+    amp.plugin('transcriptsAmpPlugin', function(options) {
         var player = this;
         var timeHandler = null;
         var $vidParent = $(player.el()).parent().parent();
@@ -133,10 +140,12 @@
             $vidParent.wrap(mainContainer.el());
             $vidParent.parent().append(transcriptContainer.el());
 
-            player
-                .getChild('controlBar')
-                .getChild('controlBarIconsRight')
-                .addChild(tcButton);
+            if (!options.hidden) {
+                player
+                    .getChild('controlBar')
+                    .getChild('controlBarIconsRight')
+                    .addChild(tcButton);
+            }
         });
         this.addEventListener(amp.eventName.play, function(evt) {  // eslint-disable-line no-unused-vars
             timeHandler = setInterval(function() {
